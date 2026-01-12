@@ -1,0 +1,9 @@
+Sureness=true possible matches wurden hinzugefügt
+ # Q_Gram:
+ - Added [99951], Failed [49], Total time [831016] ms
+   
+ # JaroWinklerComparator:
+ - Added [99951], Failed [49], Total time [908170] ms
+ 
+ # DamerauLevenshteinComparator
+ - Added [99951], Failed [49], Total time [924932] ms

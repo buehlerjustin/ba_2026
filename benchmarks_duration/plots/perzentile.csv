@@ -1,0 +1,4 @@
+Comparator,P50,P90,P95,P99
+Damerau-Levenshtein,9.0,15.0,18.0,30.0
+Jaro-Winkler,8.0,13.0,18.0,33.0
+q-gram,7.0,13.0,17.0,31.0
