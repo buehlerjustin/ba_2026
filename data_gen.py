@@ -3,10 +3,10 @@ import pandas as pd
 from faker import Faker
 
 # Herkünfte der Daten
-fake = Faker(['de_DE', 'en_GB'])
+fake = Faker(['de_DE'])
 
 # Anzahl Datensätze
-count = 300 
+count = 1_000_000
 
 def create_clean_record(idx):
     last = fake.last_name()

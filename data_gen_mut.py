@@ -55,14 +55,18 @@ def mutate_keyboard_typo(value):
     return None
 
 def create_base_record(idx):
-    last = fake.last_name()
+    base_last = fake.last_name()
+    if random.random() < 0.15:
+        sep = random.choice([" ", "-"])
+        base_last = f"{base_last}{sep}{fake.last_name()}"
+    
     dob = fake.date_of_birth(maximum_age=110)
     
     return {
         "clinicExtId": str(random.randint(1000000, 99999999)),
         "vorname": fake.first_name(),
-        "nachname": last,
-        "geburtsname": last, # Standard --> Identisch
+        "nachname": base_last,
+        "geburtsname": base_last, # Standard --> Identisch
         "geburtstag": f"{dob.day:02d}",
         "geburtsmonat": f"{dob.month:02d}",
         "geburtsjahr": str(dob.year),
@@ -91,55 +95,63 @@ random.shuffle(mutation_tasks)
 for index, mutation_type in enumerate(mutation_tasks):
     mutated = False
     while not mutated:
-        original = random.choice(data[:160]).copy()
+        original = random.choice(data[:amount_of_clean_records]).copy()
         target_field = random.choice(["vorname", "nachname", "geburtsname"])
         val = str(original[target_field])
-        
-        #Phonetischer Fehler
-        if mutation_type == 1:
-            for old, new in PHONETIC_MAP.items():
-                if old in val.lower():
-                    original[target_field] = val.lower().replace(old, new, 1).capitalize()
-                    original["mutation_type"] = f"Phonetic_{target_field}"
-                    mutated = True
-                    break
-        
-        # Substitutionsfehler      
-        elif mutation_type == 2:
-            for old, new in SUB_MAP.items():
-                if old in val.lower():
-                    original[target_field] = val.lower().replace(old, new, 1).capitalize()
-                    original["mutation_type"] = f"Substitution_{target_field}"
-                    mutated = True
-                    break
-                
-        # Tastaturfehler        
-        elif mutation_type == 3:
-            new_val = mutate_keyboard_typo(val)
-            if new_val:
-                original[target_field] = new_val
-                original["mutation_type"] = f"KeyboardTypo_{target_field}"
-                mutated = True
-        # Fehlendes Feld (wird von Mainzelliste abgefangen)            
-        # elif m_type == 3:
-        #     field_to_drop = random.choice(["vorname", "geburtsname", "geburtsjahr"])
-        #     original[field_to_drop] = ""
-        #     original["mutation_type"] = f"Missing_{field_to_drop}"
-        #     mutated = True
-         
-        # Verändeurng Nachname (Heirat)   
-        elif mutation_type == 4:
-            original["nachname"] = fake.last_name()
-            original["mutation_type"] = "Marriage"
-            mutated = True
             
         # Interpunktion / Spacing    
-        elif mutation_type == 5:
-            if len(val) > 3:
-                pos = get_weighted_index(len(val))
-                char = random.choice(["-", " "])
-                original[target_field] = val[:pos] + char + val[pos:]
-                original["mutation_type"] = f"Punctuation_{target_field}"
+        if mutation_type == 5:
+            if " " in original["nachname"] or "-" in original["nachname"]:
+                old_name = original["nachname"]
+                if "-" in old_name:
+                    original["nachname"] = old_name.replace("-", " ")
+                else:
+                    original["nachname"] = old_name.replace(" ", "-")
+                original["geburtsname"] = original["nachname"]
+                original["mutation_type"] = "Punctuation_Swap_DoubleName"
+                mutated = True
+            else:
+                continue # Sucht weiter nach einer Person mit Doppelnamen
+
+        # Andere Typen
+        else:
+            field = random.choice(["vorname", "nachname", "geburtsname"])
+            val = str(original[field])
+            
+            if mutation_type == 1: # Phonetik
+                for old, new in PHONETIC_MAP.items():
+                    if old in val.lower():
+                        original[field] = val.lower().replace(old, new, 1).capitalize()
+                        original["mutation_type"] = f"Phonetic_{field}"; 
+                        mutated = True; 
+                        break
+            
+            elif mutation_type == 2: # Substitution
+                for old, new in SUB_MAP.items():
+                    if old in val.lower():
+                        original[field] = val.lower().replace(old, new, 1).capitalize()
+                        original["mutation_type"] = f"Substitution_{field}"; 
+                        mutated = True; 
+                        break
+            
+            elif mutation_type == 3: # Keyboard (Pollock/Zamora Weighted)
+                idx = get_weighted_index(len(val))
+                char = val[idx].lower()
+                if char in KEYBOARD_ADJACENCY:
+                    rep = random.choice(KEYBOARD_ADJACENCY[char])
+                    if val[idx].isupper(): rep = rep.upper()
+                    original[field] = val[:idx] + rep + val[idx+1:]
+                    original["mutation_type"] = f"Keyboard_{field}"; mutated = True
+            
+            elif mutation_type == 4: # Heirat (70/30 Komplett/Doppelname)
+                if random.random() < 0.30: # Doppelname
+                    sep = random.choice([" ", "-"])
+                    new_last = fake.last_name()
+                    original["nachname"] = f"{original['geburtsname']}{sep}{new_last}"
+                    original["mutation_type"] = "Marriage_DoubleName"
+                else: # Komplett
+                    original["nachname"] = fake.last_name()
+                    original["mutation_type"] = "Marriage_FullChange"
                 mutated = True
 
     # Metadaten anpassen

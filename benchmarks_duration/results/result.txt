@@ -7,3 +7,8 @@ Sureness=true possible matches wurden hinzugefügt
  
  # DamerauLevenshteinComparator
  - Added [99951], Failed [49], Total time [924932] ms
+
+ === Zusammenfassung ===
+- Damerau-Levenshtein: n=100000, 2xx=99951, err_rate=0.0490%, mean=9.245 ms, p50=9.000 ms, p95=18.000 ms, p99=30.000 ms, cum=924.025 s
+- Jaro-Winkler: n=100000, 2xx=99951, err_rate=0.0490%, mean=9.076 ms, p50=8.000 ms, p95=18.000 ms, p99=33.000 ms, cum=907.147 s
+- q-gram: n=100000, 2xx=99951, err_rate=0.0490%, mean=8.307 ms, p50=7.000 ms, p95=17.000 ms, p99=31.000 ms, cum=830.285 s
